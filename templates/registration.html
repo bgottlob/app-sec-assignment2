@@ -1,10 +1,6 @@
-<!doctype html>
-<html>
-<head>
-  <title>Registration</title>
-</head>
-<body>
-  <h1>Registration</title>
+{% extends "layout.html" %}
+{% block body %}
+  <h1>Registration</h1>
   <form name="register" action="/register" method="POST">
     Username: <input id="uname" name="uname" type="text"/>
     <br>
@@ -14,4 +10,4 @@
     <br>
     <button type="submit">Register</button>
   </form>
-</html>
+{% endblock %}
