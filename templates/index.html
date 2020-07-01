@@ -1,7 +1,17 @@
 {% extends "layout.html" %}
 {% block body %}
 <h1>Home</h1>
+{% if 'username' in session %}
+
+You are logged in as {{ session['username'] }}
+<a href="{{ url_for('logout') }}">Log Out</a>
+
+{% else %}
+
 <a href="{{ url_for('register') }}">Register</a>
 <br>
 <a href="{{ url_for('login') }}">Log In</a>
+<br>
+
+{% endif %}
 {% endblock %}

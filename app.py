@@ -1,5 +1,5 @@
 from os import environ
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, session, url_for
 
 users = {}
 
@@ -13,6 +13,9 @@ def index():
 @app.route('/register', methods = ['GET', 'POST'])
 def register():
     if request.method == 'GET':
+        if 'username' in session:
+            return redirect(url_for('index'))
+
         return render_template('registration.html')
     else: 
         username = request.values['uname']
@@ -33,6 +36,9 @@ def register():
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
     if request.method == 'GET':
+        if 'username' in session:
+            return redirect(url_for('index'))
+
         return render_template('login.html')
     else:
         username = request.values['uname']
@@ -44,7 +50,8 @@ def login():
 
         if username in users and password == users[username]['password']:
             if mfa == users[username]['mfa']:
-                flash('Successfully logged in as ' + username)
+                session['username'] = username
+                flash('Successfully logged in as %s' % username)
                 return redirect(url_for('index'))
             else:
                 flash(mfa_incorrect)
@@ -52,3 +59,8 @@ def login():
         else:
             flash(incorrect)
             return redirect(url_for('login'))
+
+@app.route('/logout', methods = ['GET'])
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('index'))
