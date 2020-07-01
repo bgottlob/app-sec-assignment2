@@ -64,3 +64,11 @@ def login():
 def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
+
+@app.route('/checkWords', methods = ['GET', 'POST'])
+def checkWords():
+    if request.method == 'GET':
+        return redirect(url_for('index'))
+    if 'username' in session:
+        return render_template('index.html', textout = request.values['inputtext'])
+    return redirect(url_for('index'))

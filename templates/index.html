@@ -3,8 +3,20 @@
 <h1>Home</h1>
 {% if 'username' in session %}
 
-You are logged in as {{ session['username'] }}
-<a href="{{ url_for('logout') }}">Log Out</a>
+  You are logged in as {{ session['username'] }}
+  <a href="{{ url_for('logout') }}">Log Out</a>
+  
+  <br>
+  
+  <form name="register" action="/checkWords" method="POST">
+    <textarea id="inputtext" name="inputtext"
+  	    placeholder="Insert text to check spelling on"></textarea>
+    <button type="submit">Check Spelling</button>
+  </form>
+
+  {% if textout %}
+    <p id="textout">{{ textout }}</p>
+  {% endif %}
 
 {% else %}
 
