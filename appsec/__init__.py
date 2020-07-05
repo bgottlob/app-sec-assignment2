@@ -33,7 +33,7 @@ def create_app(secret_key=None):
             mfa = request.values['2fa']
             new_user = { 'password': password, 'mfa': mfa }
             if username in users:
-                flash('ERROR: Username ' + username + ' is taken')
+                flash('Failure: Username ' + username + ' is taken')
                 return render_template(
                         'registration.html',
                         username = username, password = password, mfa = mfa
