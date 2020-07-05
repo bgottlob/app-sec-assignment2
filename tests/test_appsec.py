@@ -24,6 +24,13 @@ def register(client, username, password, mfa):
         '2fa': mfa
     }, follow_redirects = True)
 
+def login(client, username, password, mfa):
+    return client.post('/login', data = {
+        'uname': username,
+        'pword': password,
+        '2fa': mfa
+    }, follow_redirects = True)
+
 # Verifies an appropriate success message appears in rendered HTML
 def assertRegisterMessage(success, html):
     match = re.search('<li id="result">(.*)</li>', html)
@@ -34,6 +41,17 @@ def assertRegisterMessage(success, html):
     else:
         assert 'failure' in msg
 
+def assertLoginMessage(msg_type, html):
+    match = re.search('<li id="result">(.*)</li>', html)
+    assert match
+    msg = match.group(1).lower()
+    if msg_type == 'incorrect':
+        assert 'incorrect' in msg
+    elif msg_type == 'mfa':
+        assert 'two-factor' in msg
+        assert 'failure' in msg
+    else:
+        assert 'success' in msg
 
 # Tests that a client initially does not have a session token
 def test_no_token(client):
@@ -57,3 +75,31 @@ def test_register(client):
             '6091112222'
             ).data.decode('utf-8')
     assertRegisterMessage(False, res)
+
+def test_login(client):
+    register(client, 'testusername', 'testpassword', '6091234567')
+    with client:
+        res = login(client, 'testusername', 'testpassword', '6091234567').data.decode('utf-8')
+        assertLoginMessage('mfs', res)
+        assert 'username' in session
+        assert session['username'] == 'testusername'
+
+def test_incorrect_login(client):
+    register(client, 'testusername', 'testpassword', '6091234567')
+    with client:
+        res = login(client, 'testusername', 'testpassword!', '6091234567').data.decode('utf-8')
+        assert (not 'username' in session)
+        assert (len(session) == 0)
+        assertLoginMessage('incorrect', res)
+        res = login(client, 'testusername!', 'testpassword', '6091234567').data.decode('utf-8')
+        assert (not 'username' in session)
+        assert (len(session) == 0)
+        assertLoginMessage('incorrect', res)
+
+def test_mfa_failure(client):
+    register(client, 'testusername', 'testpassword', '6091234567')
+    with client:
+        res = login(client, 'testusername', 'testpassword', '6091111111').data.decode('utf-8')
+        assert (not 'username' in session)
+        assert (len(session) == 0)
+        assertLoginMessage('mfa', res)
