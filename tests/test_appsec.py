@@ -31,6 +31,9 @@ def login(client, username, password, mfa):
         '2fa': mfa
     }, follow_redirects = True)
 
+def logout(client):
+    return client.get('/logout', follow_redirects = True)
+
 # Verifies an appropriate success message appears in rendered HTML
 def assertRegisterMessage(success, html):
     match = re.search('<li id="result">(.*)</li>', html)
@@ -76,13 +79,16 @@ def test_register(client):
             ).data.decode('utf-8')
     assertRegisterMessage(False, res)
 
-def test_login(client):
+def test_login_logout(client):
     register(client, 'testusername', 'testpassword', '6091234567')
     with client:
         res = login(client, 'testusername', 'testpassword', '6091234567').data.decode('utf-8')
         assertLoginMessage('mfs', res)
         assert 'username' in session
         assert session['username'] == 'testusername'
+        logout(client)
+        assert (not 'username' in session)
+        assert (len(session) == 0)
 
 def test_incorrect_login(client):
     register(client, 'testusername', 'testpassword', '6091234567')
