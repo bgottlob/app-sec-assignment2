@@ -3,7 +3,7 @@ setup(name='appsec',
       version='0.1',
       packages=find_packages(),
       package_data={
-            'appsec': ['templates/*']
+            'appsec': ['templates/*', 'spell/*']
       },
       install_requires=['flask'],
       extras_require={"test": ["pytest", "coverage"]}

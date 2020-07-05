@@ -18,6 +18,10 @@
     <p id="textout">{{ textout }}</p>
   {% endif %}
 
+  {% if misspelled %}
+    <p id="misspelled">{{ misspelled }}</p>
+  {% endif %}
+
 {% else %}
 
 <a href="{{ url_for('register') }}">Register</a>

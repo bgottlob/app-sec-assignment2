@@ -34,6 +34,11 @@ def login(client, username, password, mfa):
 def logout(client):
     return client.get('/logout', follow_redirects = True)
 
+def check_words(client, input_text):
+    return client.post('/checkWords', data = {
+        'inputtext': input_text
+    }, follow_redirects = True)
+
 # Verifies an appropriate success message appears in rendered HTML
 def assertRegisterMessage(success, html):
     match = re.search('<li id="result">(.*)</li>', html)
@@ -55,6 +60,16 @@ def assertLoginMessage(msg_type, html):
         assert 'failure' in msg
     else:
         assert 'success' in msg
+
+def assertTextOut(input_text, html):
+    match = re.search('<p id="textout">(.*)</p>', html)
+    assert match
+    assert (input_text in match.group(1))
+
+def assertMisspelled(misspelled, html):
+    match = re.search('<p id="misspelled">(.*)</p>', html)
+    assert match
+    assert (misspelled == match.group(1))
 
 # Tests that a client initially does not have a session token
 def test_no_token(client):
@@ -109,3 +124,11 @@ def test_mfa_failure(client):
         assert (not 'username' in session)
         assert (len(session) == 0)
         assertLoginMessage('mfa', res)
+
+def test_check_words(client):
+    register(client, 'testusername', 'testpassword', '6091234567')
+    login(client, 'testusername', 'testpassword', '6091234567')
+    with client:
+        res = check_words(client, 'Hello foof world bar baz').data.decode('utf-8')
+        assertTextOut('Hello foof world bar baz', res)
+        assertMisspelled('foof, baz', res)
