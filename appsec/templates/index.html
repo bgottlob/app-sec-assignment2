@@ -4,11 +4,11 @@
 {% if 'username' in session %}
 
   You are logged in as {{ session['username'] }}
-  <a href="{{ url_for('logout') }}">Log Out</a>
+  <a href="{{ url_for('auth.logout') }}">Log Out</a>
   
   <br>
   
-  <form name="register" action="/checkWords" method="POST">
+  <form name="checkwords" action="/checkWords" method="POST">
     <textarea id="inputtext" name="inputtext"
   	    placeholder="Insert text to check spelling on"></textarea>
     <button type="submit">Check Spelling</button>
@@ -24,9 +24,9 @@
 
 {% else %}
 
-<a href="{{ url_for('register') }}">Register</a>
+<a href="{{ url_for('auth.register') }}">Register</a>
 <br>
-<a href="{{ url_for('login') }}">Log In</a>
+<a href="{{ url_for('auth.login') }}">Log In</a>
 <br>
 
 {% endif %}
