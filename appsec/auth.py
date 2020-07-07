@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import os
 from flask import (
     Blueprint, flash, redirect, render_template, request, session, url_for
 )
@@ -17,7 +20,8 @@ def register():
         username = request.values['uname']
         password = request.values['pword']
         mfa = request.values['2fa']
-        new_user = { 'password': password, 'mfa': mfa }
+        password_hash, salt = hash_password(password)
+        new_user = { 'password_hash': password_hash, 'salt': salt, 'mfa': mfa }
         if username in users:
             flash('Failure: Username ' + username + ' is taken')
             return render_template(
@@ -44,7 +48,7 @@ def login():
         incorrect = 'Incorrect username or password'
         mfa_incorrect = 'Two-factor authentication failure'
 
-        if username in users and password == users[username]['password']:
+        if username in users and verify_password(password, users[username]['password_hash'], users[username]['salt']):
             if mfa == users[username]['mfa']:
                 session['username'] = username
                 flash('Successfully logged in as %s' % username)
@@ -60,3 +64,14 @@ def login():
 def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
+
+def hash_password(password):
+    salt = os.urandom(16)
+    password_hash = hashlib.pbkdf2_hmac('sha512', password.encode(), salt, 100000)
+    return password_hash, salt
+
+def verify_password(password, password_hash, salt):
+    return hmac.compare_digest(
+        password_hash,
+        hashlib.pbkdf2_hmac('sha512', password.encode(), salt, 100000)
+    )
