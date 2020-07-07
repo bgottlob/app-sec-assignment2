@@ -4,7 +4,7 @@ import re
 # Assertions for HTML elements required in project specification
 # Verifies an appropriate success message appears in rendered HTML
 def assertRegisterMessage(success, html):
-    match = re.search('<li id="result">(.*)</li>', html)
+    match = re.search('<li id="success">(.*)</li>', html)
     assert match
     msg = match.group(1).lower()
     if success:

@@ -22,14 +22,15 @@ def register():
         mfa = request.values['2fa']
         password_hash, salt = hash_password(password)
         new_user = { 'password_hash': password_hash, 'salt': salt, 'mfa': mfa }
+        category = 'success'
         if username in users:
-            flash('Failure: Username ' + username + ' is taken')
+            flash('Failure: Username ' + username + ' is taken', category)
             return render_template(
                     'registration.html',
                     username = username, password = password, mfa = mfa
                    )
         else:
-            flash('Success: You registered as ' + username)
+            flash('Success: You registered as ' + username, category)
             users[username] = new_user
             return redirect(url_for('index'))
 
@@ -45,19 +46,21 @@ def login():
         password = request.values['pword']
         mfa = request.values['2fa']
 
+        category = 'result'
+
         incorrect = 'Incorrect username or password'
         mfa_incorrect = 'Two-factor authentication failure'
 
         if username in users and verify_password(password, users[username]['password_hash'], users[username]['salt']):
             if mfa == users[username]['mfa']:
                 session['username'] = username
-                flash('Successfully logged in as %s' % username)
+                flash('Successfully logged in as %s' % username, category)
                 return redirect(url_for('index'))
             else:
-                flash(mfa_incorrect)
+                flash(mfa_incorrect, category)
                 return redirect(url_for('auth.login'))
         else:
-            flash(incorrect)
+            flash(incorrect, category)
             return redirect(url_for('auth.login'))
 
 @bp.route('/logout', methods = ['GET'])
