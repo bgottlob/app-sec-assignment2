@@ -18,6 +18,16 @@ def create_app(secret_key=None):
     except OSError:
         pass
 
+    @app.after_request
+    def add_response_headers(response):
+        response.headers['Content-Security-Policy'] = "default-src 'self'"
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['Content-Type'] = 'text/html; charset=UTF-8'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        return response
+
     @app.route('/', methods = ['GET'])
     def index():
         return render_template('index.html')
