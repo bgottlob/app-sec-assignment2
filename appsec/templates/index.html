@@ -4,6 +4,8 @@
 {% if 'username' in session %}
 
   You are logged in as {{ session['username'] }}
+  <br>
+
   <a href="{{ url_for('auth.logout') }}">Log Out</a>
   
   <br>
@@ -11,14 +13,17 @@
   <form name="checkwords" action="/checkWords" method="POST">
     <textarea id="inputtext" name="inputtext"
   	    placeholder="Insert text to check spelling on"></textarea>
+    <br>
     <button type="submit">Check Spelling</button>
   </form>
 
   {% if textout %}
+    <h2>User Input</h2>
     <p id="textout">{{ textout }}</p>
   {% endif %}
 
   {% if misspelled %}
+    <h2>Misspelled Words</h2>
     <p id="misspelled">{{ misspelled }}</p>
   {% endif %}
 
