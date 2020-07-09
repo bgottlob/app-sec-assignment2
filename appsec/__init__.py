@@ -4,12 +4,16 @@ from flask import (
     Flask, flash, redirect, render_template, request, session, url_for
 )
 
-def create_app(secret_key=None):
+def create_app(secret_key):
     app = Flask(__name__, instance_relative_config=True)
-    if secret_key:
-        app.secret_key = secret_key
-    else:
-        app.secret_key = os.environ['SECRET_KEY']
+    app.config.update(
+        SECRET_KEY = secret_key,
+        SESSION_COOKIE_SECURE = True,
+        SESSION_COOKIE_HTTPONLY = True,
+        SESSION_COOKIE_SAMESITE = 'Strict',
+        PERMANENT_SESSION_LIFETIME = 900, # 15 minutes of inactivity
+        SESSION_REFRESH_EACH_REQUEST = True
+    )
 
     try:
         os.makedirs(app.instance_path)

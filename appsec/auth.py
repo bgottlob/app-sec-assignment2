@@ -54,6 +54,7 @@ def login():
 
         if username in users and verify_password(password, users[username]['password_hash'], users[username]['salt']):
             if mfa == users[username]['mfa']:
+                session.permanent = True
                 session['username'] = username
                 flash('Successfully logged in as %s' % username, category)
                 return redirect(url_for('index'))
@@ -66,7 +67,7 @@ def login():
 
 @bp.route('/logout', methods = ['GET'])
 def logout():
-    session.pop('username', None)
+    session.clear()
     return redirect(url_for('index'))
 
 def hash_password(password):
