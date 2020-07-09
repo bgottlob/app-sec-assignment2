@@ -2,11 +2,11 @@
 {% block body %}
   <h1>Registration</h1>
   <form name="register" action="/register" method="POST">
-    Username: <input id="uname" name="uname" type="text" value="{{ username }}"/>
+    Username: <input id="uname" name="uname" type="text" value="{{ username }}" required/>
     <br>
-    Password: <input id="pword" name="pword" type="password" value="{{ password }}"/>
+    Password: <input id="pword" name="pword" type="password" value="{{ password }}" required/>
     <br>
-    Cellphone Number: <input id="2fa" name="2fa" type="text"/ value="{{ mfa }}">
+    Cellphone Number: <input id="2fa" name="2fa" type="text"/ value="{{ mfa }}" required/>
     <br>
     <button type="submit">Register</button>
   </form>
