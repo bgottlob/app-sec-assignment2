@@ -12,10 +12,10 @@ users = {}
 
 @bp.route('/register', methods = ['GET', 'POST'])
 def register():
-    if request.method == 'GET':
-        if 'username' in session:
-            return redirect(url_for('index'))
+    if 'username' in session:
+        return redirect(url_for('index'))
 
+    if request.method == 'GET':
         return render_template('registration.html')
     else: 
         username = request.values['uname']
@@ -37,10 +37,10 @@ def register():
 
 @bp.route('/login', methods = ['GET', 'POST'])
 def login():
-    if request.method == 'GET':
-        if 'username' in session:
-            return redirect(url_for('index'))
+    if 'username' in session:
+        return redirect(url_for('index'))
 
+    if request.method == 'GET':
         return render_template('login.html')
     else:
         username = request.values['uname']
