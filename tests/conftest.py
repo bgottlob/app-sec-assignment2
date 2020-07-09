@@ -34,6 +34,12 @@ class Routes:
     def logout(client):
         return client.get('/logout', follow_redirects = True)
 
+    @staticmethod
+    def check_words(client, input_text):
+        return client.post('/spell_check', data = {
+            'inputtext': input_text
+        }, follow_redirects = True)
+
 @pytest.fixture
 def routes():
     return Routes

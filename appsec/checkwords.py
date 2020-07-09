@@ -19,7 +19,7 @@ if os.path.exists(inputdir):
     shutil.rmtree(inputdir)
 pathlib.Path(inputdir).mkdir(exist_ok=True)
 
-@bp.route('/checkWords', methods = ['GET', 'POST'])
+@bp.route('/spell_check', methods = ['GET', 'POST'])
 def checkWords():
     if request.method == 'GET':
         return redirect(url_for('index'))
