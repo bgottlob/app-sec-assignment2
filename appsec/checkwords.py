@@ -8,6 +8,8 @@ from flask import (
     Blueprint, redirect, render_template, request, session, url_for
 )
 
+from appsec.auth import authenticated
+
 bp = Blueprint('checkwords', __name__)
 
 currdir = os.path.dirname(__file__)
@@ -23,7 +25,7 @@ pathlib.Path(inputdir).mkdir(exist_ok=True)
 def checkWords():
     if request.method == 'GET':
         return redirect(url_for('index'))
-    if 'username' in session:
+    if authenticated():
         input_text = request.values['inputtext']
 
         wordlist = os.path.join(currdir, 'spell', 'wordlist.txt')

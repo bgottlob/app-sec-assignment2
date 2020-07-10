@@ -9,10 +9,11 @@ from flask import (
 bp = Blueprint('auth', __name__)
 
 users = {}
+user_sessions = {}
 
 @bp.route('/register', methods = ['GET', 'POST'])
 def register():
-    if 'username' in session:
+    if authenticated():
         return redirect(url_for('index'))
 
     if request.method == 'GET':
@@ -37,7 +38,7 @@ def register():
 
 @bp.route('/login', methods = ['GET', 'POST'])
 def login():
-    if 'username' in session:
+    if authenticated():
         return redirect(url_for('index'))
 
     if request.method == 'GET':
@@ -54,8 +55,7 @@ def login():
 
         if username in users and verify_password(password, users[username]['password_hash'], users[username]['salt']):
             if mfa == users[username]['mfa']:
-                session.permanent = True
-                session['username'] = username
+                create_user_session(username)
                 flash('Successfully logged in as %s' % username, category)
                 return redirect(url_for('index'))
             else:
@@ -68,6 +68,8 @@ def login():
 @bp.route('/logout', methods = ['GET'])
 def logout():
     session.clear()
+    if authenticated():
+        invalidate_user_session(session['username'])
     return redirect(url_for('index'))
 
 def hash_password(password):
@@ -80,3 +82,24 @@ def verify_password(password, password_hash, salt):
         password_hash,
         hashlib.pbkdf2_hmac('sha512', password.encode(), salt, 100000)
     )
+
+def authenticated():
+    return ('nonce' in session) and ('username' in session) and (user_sessions[session['username']] == session['nonce'])
+
+def create_user_session(username):
+    invalidate_user_session(username)
+    nonce = os.urandom(16)
+    # Create the client-side session
+    session.permanent = True
+    session['username'] = username
+    session['nonce'] = nonce
+    # Track the session on the server side
+    user_sessions[username] = nonce
+
+def invalidate_user_session(username):
+    # Clear the server-side session
+    if username in user_sessions:
+        del user_sessions[username]
+    # Clear the client-side session
+    if session:
+        session.clear()

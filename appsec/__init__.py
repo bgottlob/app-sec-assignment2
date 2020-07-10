@@ -37,6 +37,8 @@ def create_app(secret_key):
 
     from . import auth
     app.register_blueprint(auth.bp)
+    # Use authentication check function in jinja templates
+    app.jinja_env.globals['authenticated'] = auth.authenticated
 
     from . import checkwords
     app.register_blueprint(checkwords.bp)

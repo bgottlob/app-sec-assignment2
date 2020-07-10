@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 <h1>Home</h1>
-{% if 'username' in session %}
+{% if authenticated() %}
 
   You are logged in as {{ session['username'] }}
   <br>
