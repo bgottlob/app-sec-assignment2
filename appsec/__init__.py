@@ -8,7 +8,8 @@ def create_app(secret_key):
     app = Flask(__name__, instance_relative_config=True)
     app.config.update(
         SECRET_KEY = secret_key,
-        SESSION_COOKIE_SECURE = True,
+        # Uncomment the line below when using HTTPS
+        #SESSION_COOKIE_SECURE = True,
         SESSION_COOKIE_HTTPONLY = True,
         SESSION_COOKIE_SAMESITE = 'Strict',
         PERMANENT_SESSION_LIFETIME = 900, # 15 minutes of inactivity
