@@ -30,7 +30,10 @@ def checkWords():
 
         wordlist = os.path.join(currdir, 'spell', 'wordlist.txt')
         filepath = os.path.join(inputdir, f'{uuid.uuid4()}.txt')
+
         exe = os.path.join(currdir, 'spell', 'a.out')
+        if not os.path.exists(exe):
+            exe = './a.out'
 
         with open(filepath, 'w') as f:
             f.write(request.values['inputtext'])
