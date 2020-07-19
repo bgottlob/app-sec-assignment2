@@ -1,17 +1,22 @@
+import pathlib
 import os
 import sys
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import (
+    Column, ForeignKey, Integer, String, Boolean, DateTime, Text,
+    create_engine
+)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 
 Base = declarative_base()
 
 currdir = os.path.dirname(__file__)
 dbdir = os.path.join(currdir, 'db')
+pathlib.Path(dbdir).mkdir(exist_ok=True)
 
 def db_file_path():
-    os.path.join(dbdir, 'appsec.db')
+    return os.path.join(dbdir, 'appsec.db')
 
 class User(Base):
     __tablename__ = 'user'
@@ -49,3 +54,7 @@ engine = create_engine(f'sqlite:///{db_file_path()}')
 
 # Create all tables in the database
 Base.metadata.create_all(engine)
+Base.metadata.bind = engine
+
+def create_session():
+    return sessionmaker(bind=engine)()
