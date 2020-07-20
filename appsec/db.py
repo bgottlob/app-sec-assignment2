@@ -18,6 +18,22 @@ pathlib.Path(dbdir).mkdir(exist_ok=True)
 def db_file_path():
     return os.path.join(dbdir, 'appsec.db')
 
+def create():
+    engine = create_db_engine()
+    # Create all tables in the database
+    Base.metadata.create_all(engine)
+    Base.metadata.bind = engine
+
+def create_db_engine():
+    return create_engine(f'sqlite:///{db_file_path()}')
+
+def create_session():
+    return sessionmaker(bind=create_db_engine())()
+
+def clear():
+    if os.path.exists(db_file_path()):
+        os.remove(db_file_path())
+
 class User(Base):
     __tablename__ = 'user'
     # Use numeric id as primary key, in case username changes in the future, and
@@ -50,12 +66,3 @@ class Submission(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     text = Column(Text, nullable=False)
     result = Column(Text)
-
-engine = create_engine(f'sqlite:///{db_file_path()}')
-
-# Create all tables in the database
-Base.metadata.create_all(engine)
-Base.metadata.bind = engine
-
-def create_session():
-    return sessionmaker(bind=engine)()

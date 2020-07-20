@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 
 csrf = CSRFProtect()
 
-def create_app(secret_key):
+def create_app(secret_key, clean_db=False):
     app = Flask(__name__, instance_relative_config=True)
     app.config.update(
         SECRET_KEY = secret_key,
@@ -23,6 +23,12 @@ def create_app(secret_key):
 
     with app.app_context():
         csrf.init_app(app)
+
+    from . import db
+    # Database Setup
+    if clean_db:
+        db.clear()
+    db.create()
 
     try:
         os.makedirs(app.instance_path)

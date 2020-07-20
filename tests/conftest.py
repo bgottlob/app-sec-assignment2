@@ -4,7 +4,7 @@ import pytest
 
 @pytest.fixture
 def app():
-    app = appsec.create_app(os.urandom(16))
+    app = appsec.create_app(os.urandom(16), clean_db=True)
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
     return app
