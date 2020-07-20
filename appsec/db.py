@@ -28,6 +28,7 @@ class User(Base):
     password_hash = Column(String(128), nullable=False)
     # Assuming 16 random bytes base64 encoded into a string
     salt = Column(String(24), nullable=False)
+    mfa = Column(String(11), nullable=False)
 
 class Session(Base):
     __tablename__ = 'session'
