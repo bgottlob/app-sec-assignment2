@@ -1,14 +1,18 @@
 import hashlib
 import hmac
 import os
+import sys
 
 from flask import (
     Blueprint, flash, redirect, render_template, request, session, url_for
 )
 
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
+from . import db
+
 bp = Blueprint('auth', __name__)
 
-users = {}
 user_sessions = {}
 
 @bp.route('/register', methods = ['GET', 'POST'])
@@ -19,22 +23,41 @@ def register():
     if request.method == 'GET':
         return render_template('registration.html')
     else: 
+        # Extract data from form
         username = request.values['uname']
         password = request.values['pword']
         mfa = request.values['2fa']
+
+        # Create the User object
         password_hash, salt = hash_password(password)
-        new_user = { 'password_hash': password_hash, 'salt': salt, 'mfa': mfa }
+        user = db.User(
+            username = username,
+            password_hash = password_hash,
+            salt = salt,
+            mfa = mfa
+        )
+
+        db_session = db.create_session()
+        db_session.add(user)
+
         category = 'success'
-        if username in users:
-            flash('Failure: Username ' + username + ' is taken', category)
-            return render_template(
-                    'registration.html',
-                    username = username, password = password, mfa = mfa
-                   )
-        else:
-            flash('Success: You registered as ' + username, category)
-            users[username] = new_user
+        try:
+            # Try to commit to database
+            db_session.commit()
+            flash(f'Success: You registered as {username}', category)
             return redirect(url_for('index'))
+        except IntegrityError as e:
+            if str(e.orig) == 'UNIQUE constraint failed: user.username':
+                msg = f'Failure: Username {username} is taken'
+            else:
+                print(e, file=sys.stderr)
+                msg = 'Failure: Unknown error occurred'
+
+            flash(msg, category)
+            return render_template(
+                'registration.html',
+                username = username, password = password, mfa = mfa
+            )
 
 @bp.route('/login', methods = ['GET', 'POST'])
 def login():
@@ -44,26 +67,39 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
     else:
+        # Extract data from form
         username = request.values['uname']
         password = request.values['pword']
         mfa = request.values['2fa']
 
-        category = 'result'
-
         incorrect = 'Incorrect username or password'
         mfa_incorrect = 'Two-factor authentication failure'
+        success = False
 
-        if username in users and verify_password(password, users[username]['password_hash'], users[username]['salt']):
-            if mfa == users[username]['mfa']:
-                create_user_session(username)
-                flash('Successfully logged in as %s' % username, category)
+        category = 'result'
+        db_session = db.create_session()
+        try:
+            user = db_session.query(db.User).filter(db.User.username == username).one()
+            if verify_password(password, user.password_hash, user.salt):
+                if mfa == user.mfa:
+                    create_user_session(username)
+                    flash(f'Successfully logged in as {username}', category)
+                    success = True
+                else:
+                    flash(mfa_incorrect, category)
+            else:
+                flash(incorrect, category)
+            return redirect(url_for('index'))
+        except NoResultFound:
+            flash(incorrect, category)
+        except Exception as e:
+            print(e, file = sys.stderr)
+            flash('Unknown error occurred', category)
+        finally:
+            if success:
                 return redirect(url_for('index'))
             else:
-                flash(mfa_incorrect, category)
                 return redirect(url_for('auth.login'))
-        else:
-            flash(incorrect, category)
-            return redirect(url_for('auth.login'))
 
 @bp.route('/logout', methods = ['GET'])
 def logout():
