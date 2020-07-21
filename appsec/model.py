@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 
-Base = declarative_base()
+from appsec import db
 
 currdir = os.path.dirname(__file__)
 dbdir = os.path.join(currdir, 'db')
@@ -17,12 +17,6 @@ pathlib.Path(dbdir).mkdir(exist_ok=True)
 
 def db_file_path():
     return os.path.join(dbdir, 'appsec.db')
-
-def create():
-    engine = create_db_engine()
-    # Create all tables in the database
-    Base.metadata.create_all(engine)
-    Base.metadata.bind = engine
 
 def create_db_engine():
     return create_engine(f'sqlite:///{db_file_path()}')
@@ -34,35 +28,35 @@ def clear():
     if os.path.exists(db_file_path()):
         os.remove(db_file_path())
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'user'
     # Use numeric id as primary key, in case username changes in the future, and
     # integers are faster than strings when used to join on
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(50), nullable=False, unique=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(50), nullable=False, unique=True)
     # 64 bytes in a SHA512 hash; 128 characters when represented in hex
-    password_hash = Column(String(128), nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     # Assuming 16 random bytes base64 encoded into a string
-    salt = Column(String(24), nullable=False)
-    mfa = Column(String(11), nullable=False)
+    salt = db.Column(db.String(24), nullable=False)
+    mfa = db.Column(db.String(11), nullable=False)
 
-class AuthSession(Base):
+class AuthSession(db.Model):
     __tablename__ = 'authsession'
     # Assuming UUID4
-    id = Column(String(36), primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    id = db.Column(db.String(36), primary_key=True)
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
 
-class AuthEvent(Base):
+class AuthEvent(db.Model):
     __tablename__ = 'authevent'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
     # 0 for logout, 1 for login
-    type = Column(Boolean, nullable=False)
-    datetime = Column(DateTime(timezone=False), nullable=False)
+    type = db.Column(db.Boolean, nullable=False)
+    datetime = db.Column(db.DateTime(timezone=False), nullable=False)
 
-class Submission(Base):
+class Submission(db.Model):
     __tablename__ = 'submission'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    text = Column(Text, nullable=False)
-    result = Column(Text)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    result = db.Column(db.Text)

@@ -7,10 +7,11 @@ import uuid
 from flask import (
     Blueprint, flash, redirect, render_template, request, session, url_for
 )
+from appsec import db
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
-from . import db
+from . import model
 
 bp = Blueprint('auth', __name__)
 
@@ -31,20 +32,19 @@ def register():
 
         # Create the User object
         password_hash, salt = hash_password(password)
-        user = db.User(
+        user = model.User(
             username = username,
             password_hash = password_hash,
             salt = salt,
             mfa = mfa
         )
 
-        db_session = db.create_session()
-        db_session.add(user)
+        db.session.add(user)
 
         category = 'success'
         try:
             # Try to commit to database
-            db_session.commit()
+            db.session.commit()
             flash(f'Success: You registered as {username}', category)
             return redirect(url_for('index'))
         except IntegrityError as e:
@@ -78,12 +78,11 @@ def login():
         success = False
 
         category = 'result'
-        db_session = db.create_session()
         try:
-            user = db_session.query(db.User).filter(db.User.username == username).one()
+            user = db.session.query(model.User).filter(model.User.username == username).one()
             if verify_password(password, user.password_hash, user.salt):
                 if mfa == user.mfa:
-                    create_user_session(db_session, user)
+                    create_user_session(user)
                     flash(f'Successfully logged in as {username}', category)
                     success = True
                 else:
@@ -124,11 +123,10 @@ def authenticated():
     success = False
     try:
         if ('id' in session) and ('username' in session):
-            db_session = db.create_session()
-            auth_session = db_session.query(db.AuthSession).filter(
-                db.AuthSession.id == session['id']
-            ).join(db.User).filter(
-                db.User.username == session['username']
+            auth_session = db.session.query(model.AuthSession).filter(
+                model.AuthSession.id == session['id']
+            ).join(model.User).filter(
+                model.User.username == session['username']
             ).one()
 
             print(auth_session)
@@ -140,27 +138,28 @@ def authenticated():
     finally:
         return success
 
-def create_user_session(db_session, user):
+def create_user_session(user):
     # Clear previous auth session(s) to prevent session fixation
-    invalidate_user_session(db_session, user)
+    invalidate_user_session(user)
 
     auth_sess_id = str(uuid.uuid4())
     # Create new server-side auth session
-    auth_sess = db.AuthSession(id = auth_sess_id, user_id = user.id)
+    auth_sess = model.AuthSession(id = auth_sess_id, user_id = user.id)
 
-    db_session.add(auth_sess)
-    db_session.commit()
+    db.session.add(auth_sess)
+    db.session.commit()
 
     # Create the client-side session
     session.permanent = True
     session['username'] = user.username
     session['id'] = auth_sess_id
 
-def invalidate_user_session(db_session, user):
+def invalidate_user_session(user):
     # Clear the server-side session(s)
-    auth_sessions = db_session.query(db.AuthSession).filter(db.AuthSession.user_id == user.id).all()
+    auth_sessions = db.session.query(model.AuthSession).filter(model.AuthSession.user_id == user.id).all()
     for auth_sess in auth_sessions:
-        db_session.delete(auth_sess)
+        db.session.delete(auth_sess)
+    db.session.commit()
 
     # Clear the client-side session
     if session:

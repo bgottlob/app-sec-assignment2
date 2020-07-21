@@ -4,11 +4,14 @@ from flask import (
     Flask, flash, redirect, render_template, request, session, url_for
 )
 from flask_wtf.csrf import CSRFProtect
+from flask_sqlalchemy import SQLAlchemy
 
 csrf = CSRFProtect()
+db = SQLAlchemy()
 
 def create_app(secret_key, clean_db=False):
     app = Flask(__name__, instance_relative_config=True)
+    from . import model
     app.config.update(
         SECRET_KEY = secret_key,
         # Uncomment the line below when using HTTPS
@@ -16,19 +19,24 @@ def create_app(secret_key, clean_db=False):
         SESSION_COOKIE_HTTPONLY = True,
         SESSION_COOKIE_SAMESITE = 'Strict',
         PERMANENT_SESSION_LIFETIME = 900, # 15 minutes of inactivity
-        SESSION_REFRESH_EACH_REQUEST = True
+        SESSION_REFRESH_EACH_REQUEST = True,
+        SQLALCHEMY_DATABASE_URI = f'sqlite:///{model.db_file_path()}',
+        SQLALCHEMY_TRACK_MODIFICATIONS = False
     )
+
+    from . import db
 
     app.app_context().push()
 
     with app.app_context():
         csrf.init_app(app)
+        db.init_app(app)
 
-    from . import db
+
     # Database Setup
     if clean_db:
-        db.clear()
-    db.create()
+        db.drop_all()
+    db.create_all()
 
     try:
         os.makedirs(app.instance_path)
