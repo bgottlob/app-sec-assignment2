@@ -46,8 +46,8 @@ class User(Base):
     salt = Column(String(24), nullable=False)
     mfa = Column(String(11), nullable=False)
 
-class Session(Base):
-    __tablename__ = 'session'
+class AuthSession(Base):
+    __tablename__ = 'authsession'
     # Assuming UUID4
     id = Column(String(36), primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)

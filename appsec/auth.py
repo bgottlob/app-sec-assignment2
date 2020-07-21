@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import os
 import sys
+import uuid
 
 from flask import (
     Blueprint, flash, redirect, render_template, request, session, url_for
@@ -82,7 +83,7 @@ def login():
             user = db_session.query(db.User).filter(db.User.username == username).one()
             if verify_password(password, user.password_hash, user.salt):
                 if mfa == user.mfa:
-                    create_user_session(username)
+                    create_user_session(db_session, user)
                     flash(f'Successfully logged in as {username}', category)
                     success = True
                 else:
@@ -120,22 +121,47 @@ def verify_password(password, password_hash, salt):
     )
 
 def authenticated():
-    return ('nonce' in session) and ('username' in session) and (user_sessions[session['username']] == session['nonce'])
+    success = False
+    try:
+        if ('id' in session) and ('username' in session):
+            db_session = db.create_session()
+            auth_session = db_session.query(db.AuthSession).filter(
+                db.AuthSession.id == session['id']
+            ).join(db.User).filter(
+                db.User.username == session['username']
+            ).one()
 
-def create_user_session(username):
-    invalidate_user_session(username)
-    nonce = os.urandom(16)
+            print(auth_session)
+
+            # If this statement is reached, there is a session for this user
+            success = True
+    except Exception as e:
+        print(e, file = sys.stderr)
+    finally:
+        return success
+
+def create_user_session(db_session, user):
+    # Clear previous auth session(s) to prevent session fixation
+    invalidate_user_session(db_session, user)
+
+    auth_sess_id = str(uuid.uuid4())
+    # Create new server-side auth session
+    auth_sess = db.AuthSession(id = auth_sess_id, user_id = user.id)
+
+    db_session.add(auth_sess)
+    db_session.commit()
+
     # Create the client-side session
     session.permanent = True
-    session['username'] = username
-    session['nonce'] = nonce
-    # Track the session on the server side
-    user_sessions[username] = nonce
+    session['username'] = user.username
+    session['id'] = auth_sess_id
 
-def invalidate_user_session(username):
-    # Clear the server-side session
-    if username in user_sessions:
-        del user_sessions[username]
+def invalidate_user_session(db_session, user):
+    # Clear the server-side session(s)
+    auth_sessions = db_session.query(db.AuthSession).filter(db.AuthSession.user_id == user.id).all()
+    for auth_sess in auth_sessions:
+        db_session.delete(auth_sess)
+
     # Clear the client-side session
     if session:
         session.clear()
