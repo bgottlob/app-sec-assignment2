@@ -65,4 +65,7 @@ def create_app(secret_key, clean_db=False):
     from . import checkwords
     app.register_blueprint(checkwords.bp)
 
+    from . import history
+    app.register_blueprint(history.bp)
+
     return app

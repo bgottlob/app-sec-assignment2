@@ -9,6 +9,10 @@
   <a href="{{ url_for('auth.logout') }}">Log Out</a>
   
   <br>
+
+  <a href="{{ url_for('history.history') }}">Your submission history</a>
+
+  <br>
   
   <form name="checkwords" action="/spell_check" method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>

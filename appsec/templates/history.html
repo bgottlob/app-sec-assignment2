@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h1>Submission History</h1>
+  {% if submissions|length > 0 %}
+    <p>You have made {{ submissions|length }} submissions</p>
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Input</th>
+      </tr>
+      {% for s in submissions %}
+      <tr>
+        <td><a href="{{ url_for('history.submission', id = s.id) }}">{{ s.id }}</a></td>
+        <td>{{ s.text|truncate(30) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>You have not made any submissions</p>
+  {% endif %}
+{% endblock %}
