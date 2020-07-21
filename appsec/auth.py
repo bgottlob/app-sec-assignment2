@@ -120,23 +120,20 @@ def verify_password(password, password_hash, salt):
     )
 
 def authenticated():
-    success = False
+    user = None
     try:
         if ('id' in session) and ('username' in session):
-            auth_session = db.session.query(model.AuthSession).filter(
+            auth_session, user = db.session.query(
+                model.AuthSession, model.User
+            ).filter(
                 model.AuthSession.id == session['id']
             ).join(model.User).filter(
                 model.User.username == session['username']
             ).one()
-
-            print(auth_session)
-
-            # If this statement is reached, there is a session for this user
-            success = True
     except Exception as e:
         print(e, file = sys.stderr)
     finally:
-        return success
+        return user
 
 def create_user_session(user):
     # Clear previous auth session(s) to prevent session fixation

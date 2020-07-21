@@ -1,3 +1,4 @@
+import datetime
 import os
 import pathlib
 import shutil
@@ -8,7 +9,9 @@ from flask import (
     Blueprint, redirect, render_template, request, session, url_for
 )
 
+from appsec import db
 from appsec.auth import authenticated
+from . import model
 
 bp = Blueprint('checkwords', __name__)
 
@@ -25,7 +28,8 @@ pathlib.Path(inputdir).mkdir(exist_ok=True)
 def checkWords():
     if request.method == 'GET':
         return redirect(url_for('index'))
-    if authenticated():
+    user = authenticated()
+    if user:
         input_text = request.values['inputtext']
 
         wordlist = os.path.join(currdir, 'spell', 'wordlist.txt')
@@ -36,15 +40,26 @@ def checkWords():
             exe = './a.out'
 
         with open(filepath, 'w') as f:
-            f.write(request.values['inputtext'])
+            f.write(input_text)
 
         cmd = f'{exe} {filepath} {wordlist}'
         res = subprocess.check_output([cmd], shell=True).decode('utf-8')
+        misspelled = res.rstrip().replace('\n', ', ')
+
+        submission = model.Submission(
+            user_id = user.id,
+            text = input_text,
+            result = misspelled
+        )
+        db.session.add(submission)
+        db.session.commit()
 
         # Delete user input file after misspelled words are found, it is no longer needed
-        #os.remove(filepath)
+        os.remove(filepath)
         
-        return render_template('index.html', textout = input_text, misspelled = res.rstrip().replace('\n', ', '))
+        return render_template(
+            'index.html', textout = input_text, misspelled = misspelled
+        )
 
     # Redirect users who are not logged in to the home page
     return redirect(url_for('index'))
