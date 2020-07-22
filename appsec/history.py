@@ -28,7 +28,9 @@ def submission(id):
                 model.Submission.id == id,
                 model.Submission.user_id == user.id
             )).one()
-            return render_template('submission.html', submission = submission)
+            return render_template('submission.html',
+                                   submission = submission,
+                                   username = user.username)
         except NoResultFound:
             return redirect(url_for('history.history'))
     else:

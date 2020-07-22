@@ -1,7 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
-  <h1>Submission {{ submission.id }}</h1>
-  <p>{{ submission.text }}</p>
-  <br>
-  <p>{{ submission.result }}</p>
+  <h1>Submission</h1>
+
+  <h2>Submitted By:</h2>
+  <p id="username">{{ username }}</p>
+
+  <h2>ID</h2>
+  <p id="queryid">{{ submission.id }}</p>
+
+  <h2>User Input</h2>
+  <p id="querytext">{{ submission.text }}</p>
+
+  <h2>Misspelled Words</h2>
+  <p id="queryresults">{{ submission.result }}</p>
 {% endblock %}

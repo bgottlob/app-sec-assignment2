@@ -2,7 +2,7 @@
 {% block body %}
   <h1>Submission History</h1>
   {% if submissions|length > 0 %}
-    <p>You have made {{ submissions|length }} submissions</p>
+    <p>There are <span id="numqueries">{{ submissions|length }}</span> submissions</p>
     <table>
       <tr>
         <th>ID</th>
@@ -10,7 +10,11 @@
       </tr>
       {% for s in submissions %}
       <tr>
-        <td><a href="{{ url_for('history.submission', id = s.id) }}">{{ s.id }}</a></td>
+        <td>
+          <a href="{{ url_for('history.submission', id = s.id) }}">
+            <span id="query#">{{ s.id }}</span>
+          </a>
+        </td>
         <td>{{ s.text|truncate(30) }}</td>
       </tr>
       {% endfor %}
