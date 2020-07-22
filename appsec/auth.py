@@ -17,6 +17,25 @@ bp = Blueprint('auth', __name__)
 
 user_sessions = {}
 
+def create_admin_account():
+    admin = db.session.query(model.User).filter_by(username = 'admin').one_or_none()
+    if admin == None:
+        # Required hard-coded admin credentials
+        username = 'admin'
+        password = 'Administrator@1'
+        mfa = '12345678901'
+
+        # Create the admin User object
+        password_hash, salt = hash_password(password)
+        admin = model.User(
+            username = username,
+            password_hash = password_hash,
+            salt = salt,
+            mfa = mfa
+        )
+        db.session.add(admin)
+        db.session.commit()
+
 @bp.route('/register', methods = ['GET', 'POST'])
 def register():
     if authenticated():
@@ -134,6 +153,9 @@ def authenticated():
         print(e, file = sys.stderr)
     finally:
         return user
+
+def is_admin(user):
+    return user.username == 'admin'
 
 def create_user_session(user):
     # Clear previous auth session(s) to prevent session fixation

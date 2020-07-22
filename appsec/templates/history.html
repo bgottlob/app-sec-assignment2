@@ -1,6 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
   <h1>Submission History</h1>
+
+  {% if is_admin %}
+  <form name="history" action="/history" method="POST">
+    <input id="userquery" name="userquery" placeholder="Search by username" type="text" required/>
+    <br>
+    <button type="submit">Search</button>
+  </form>
+
+  {% endif %}
+
   {% if submissions|length > 0 %}
     <p>There are <span id="numqueries">{{ submissions|length }}</span> submissions</p>
     <table>

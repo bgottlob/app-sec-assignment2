@@ -7,30 +7,51 @@ from sqlalchemy.sql.expression import and_
 
 bp = Blueprint('history', __name__)
 
-@bp.route('/history', methods = ['GET'])
+@bp.route('/history', methods = ['GET', 'POST'])
 def history():
     user = auth.authenticated()
     if user:
-        submissions = db.session.query(model.Submission).filter_by(user_id=user.id).all()
+        # An admin is searching for a specific user's submissions
+        if request.method == 'POST' and auth.is_admin(user):
+            username = request.values['userquery']
+            submissions = db.session.query(
+                model.Submission
+            ).join(model.User).filter(model.User.username == username).all()
+
+        elif request.method == 'GET': # A user navigates to the history page
+            query = db.session.query(model.Submission)
+            if not auth.is_admin(user):
+                query = query.filter_by(user_id = user.id)
+            submissions = query.all()
+
         return render_template('history.html',
-                               submissions = submissions)
-    else:
-        return redirect(url_for('index'))
+                               submissions = submissions,
+                               is_admin = auth.is_admin(user))
+
+    return redirect(url_for('index'))
 
 @bp.route('/history/<int:id>')
 def submission(id):
     user = auth.authenticated()
     if user:
         try:
-            submission = db.session.query(
-                model.Submission
-            ).filter(and_(
-                model.Submission.id == id,
-                model.Submission.user_id == user.id
-            )).one()
+            query = db.session.query(
+                model.Submission,
+                model.User
+            ).join(model.User, model.User.id == model.Submission.user_id)
+
+            if auth.is_admin(user):
+                query = query.filter(model.Submission.id == id)
+            else:
+                query = query.filter(and_(
+                    model.Submission.id == id,
+                    model.Submission.user_id == user.id
+                ))
+
+            submission, sub_user = query.one()
             return render_template('submission.html',
                                    submission = submission,
-                                   username = user.username)
+                                   username = sub_user.username)
         except NoResultFound:
             return redirect(url_for('history.history'))
     else:

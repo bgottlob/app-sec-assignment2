@@ -37,6 +37,8 @@ def create_app(secret_key, clean_db=False):
     if clean_db:
         db.drop_all()
     db.create_all()
+    from . import auth
+    auth.create_admin_account()
 
     try:
         os.makedirs(app.instance_path)
@@ -57,7 +59,6 @@ def create_app(secret_key, clean_db=False):
     def index():
         return render_template('index.html')
 
-    from . import auth
     app.register_blueprint(auth.bp)
     # Use authentication check function in jinja templates
     app.jinja_env.globals['authenticated'] = auth.authenticated
