@@ -41,6 +41,25 @@ class Routes:
             'inputtext': input_text
         }, follow_redirects = True)
 
+    @staticmethod
+    def history(client):
+        return client.get('/history', follow_redirects = True)
+
+    @staticmethod
+    def submission(client, submission_id):
+        return client.get(f'/history/{submission_id}', follow_redirects = True)
+
 @pytest.fixture
 def routes():
     return Routes
+
+@pytest.fixture
+def registered_users(client, routes):
+    users = [
+        { 'username': 'user_a', 'password': 'password_a', 'mfa': '1234567890' },
+        { 'username': 'user_b', 'password': 'password_b', 'mfa': '1234567890' }
+    ]
+    with client:
+        for u in users:
+            routes.register(client, u['username'], u['password'], u['mfa'])
+    return users
