@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h1>Login Session Log</h1>
+  <form id="userid" action="/login_history" method="POST">
+    <input name="userid" placeholder="Search by username" type="text" required/>
+    <br>
+    <button type="submit">Search</button>
+  </form>
+
+  <ul>
+    {% for e in events %}
+    <li>
+      Login Time: <span id="login{{ e.id }}_time">{{ e.login_datetime }}</span>
+      <br>
+      Logout Time: <span id="logout{{ e.id }}_time">
+        {% if e.logout_datetime %}
+          {{ e.logout_datetime }}
+        {% else %}
+          N/A
+        {% endif %}
+      </span>
+    </li>
+    <br>
+    {% endfor %}
+  </ul>
+{% endblock %}

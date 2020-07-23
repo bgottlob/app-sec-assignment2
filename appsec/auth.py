@@ -1,3 +1,4 @@
+from datetime import datetime
 import hashlib
 import hmac
 import os
@@ -11,6 +12,8 @@ from appsec import db
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import and_
+
 from . import model
 
 bp = Blueprint('auth', __name__)
@@ -43,7 +46,7 @@ def register():
 
     if request.method == 'GET':
         return render_template('registration.html')
-    else: 
+    else:
         # Extract data from form
         username = request.values['uname']
         password = request.values['pword']
@@ -122,9 +125,26 @@ def login():
 
 @bp.route('/logout', methods = ['GET'])
 def logout():
+    # Clear the client-side session
     session.clear()
     if authenticated():
-        invalidate_user_session(session['username'])
+        invalidate_user_session(user)
+    return redirect(url_for('index'))
+
+@bp.route('/login_history', methods = ['GET', 'POST'])
+def login_history():
+    user = authenticated()
+    # Only the admin user can use this route
+    if user and is_admin(user):
+        if request.method == 'GET':
+            return render_template('login_history.html', events = [])
+        else:
+            username = request.values['userid']
+            events = db.session.query(model.AuthSession).join(
+                model.User
+            ).filter(model.User.username == username)
+            return render_template('login_history.html', events = events)
+
     return redirect(url_for('index'))
 
 def hash_password(password):
@@ -144,9 +164,10 @@ def authenticated():
         if ('id' in session) and ('username' in session):
             auth_session, user = db.session.query(
                 model.AuthSession, model.User
-            ).filter(
-                model.AuthSession.id == session['id']
-            ).join(model.User).filter(
+            ).filter(and_(
+                model.AuthSession.id == session['id'],
+                model.AuthSession.valid == True
+            )).join(model.User).filter(
                 model.User.username == session['username']
             ).one()
     except Exception as e:
@@ -163,7 +184,12 @@ def create_user_session(user):
 
     auth_sess_id = str(uuid.uuid4())
     # Create new server-side auth session
-    auth_sess = model.AuthSession(id = auth_sess_id, user_id = user.id)
+    auth_sess = model.AuthSession(
+        id = auth_sess_id,
+        user_id = user.id,
+        valid = True,
+        login_datetime = datetime.now()
+    )
 
     db.session.add(auth_sess)
     db.session.commit()
@@ -175,9 +201,13 @@ def create_user_session(user):
 
 def invalidate_user_session(user):
     # Clear the server-side session(s)
-    auth_sessions = db.session.query(model.AuthSession).filter(model.AuthSession.user_id == user.id).all()
-    for auth_sess in auth_sessions:
-        db.session.delete(auth_sess)
+    auth_sessions = db.session.query(model.AuthSession).filter(and_(
+        model.AuthSession.user_id == user.id,
+        model.AuthSession.valid == True
+    )).all()
+    for a in auth_sessions:
+        a.valid = False
+        a.logout_datetime = datetime.now()
     db.session.commit()
 
     # Clear the client-side session

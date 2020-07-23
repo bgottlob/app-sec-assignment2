@@ -5,9 +5,9 @@ from sqlalchemy import (
     Column, ForeignKey, Integer, String, Boolean, DateTime, Text,
     create_engine
 )
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import create_engine
 
 from appsec import db
 
@@ -45,14 +45,9 @@ class AuthSession(db.Model):
     # Assuming UUID4
     id = db.Column(db.String(36), primary_key=True)
     user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-
-class AuthEvent(db.Model):
-    __tablename__ = 'authevent'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=False)
-    # 0 for logout, 1 for login
-    type = db.Column(db.Boolean, nullable=False)
-    datetime = db.Column(db.DateTime(timezone=False), nullable=False)
+    valid = db.Column(db.Boolean, nullable=False)
+    login_datetime = db.Column(db.DateTime(timezone=False), nullable=False)
+    logout_datetime = db.Column(db.DateTime(timezone=False))
 
 class Submission(db.Model):
     __tablename__ = 'submission'
