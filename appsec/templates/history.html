@@ -3,8 +3,8 @@
   <h1>Submission History</h1>
 
   {% if is_admin %}
-  <form name="history" action="/history" method="POST">
-    <input id="userquery" name="userquery" placeholder="Search by username" type="text" required/>
+  <form id="userquery" action="/history" method="POST">
+    <input name="userquery" placeholder="Search by username" type="text" required/>
     <br>
     <button type="submit">Search</button>
   </form>
@@ -22,7 +22,7 @@
       <tr>
         <td>
           <a href="{{ url_for('history.submission', id = s.id) }}">
-            <span id="query#">{{ s.id }}</span>
+            <span id="query{{ s.id }}">{{ s.id }}</span>
           </a>
         </td>
         <td>{{ s.text|truncate(30) }}</td>

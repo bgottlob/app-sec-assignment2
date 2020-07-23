@@ -8,10 +8,11 @@ def assertNumSubmissions(num, html):
     assert num == int(match.group(1))
 
 def assertSubmissionID(id, html):
-    match = re.search('<span id="query#">(.*)</span>', html)
+    match = re.search('<span id="query(\d+)">(.*)</span>', html)
     assert match
     print(match.group(1))
     assert id == int(match.group(1))
+    assert id == int(match.group(2))
 
 # Assertions for /history/<id> page
 def assertUsername(username, html):
