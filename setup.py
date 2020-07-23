@@ -5,6 +5,6 @@ setup(name='appsec',
       package_data={
             'appsec': ['templates/*', 'spell/*']
       },
-      install_requires=['flask'],
+      install_requires=['flask', 'Flask-WTF'],
       extras_require={"test": ["pytest", "coverage"]}
       )

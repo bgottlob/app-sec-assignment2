@@ -3,6 +3,9 @@ import os
 from flask import (
     Flask, flash, redirect, render_template, request, session, url_for
 )
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
 
 def create_app(secret_key):
     app = Flask(__name__, instance_relative_config=True)
@@ -15,6 +18,11 @@ def create_app(secret_key):
         PERMANENT_SESSION_LIFETIME = 900, # 15 minutes of inactivity
         SESSION_REFRESH_EACH_REQUEST = True
     )
+
+    app.app_context().push()
+
+    with app.app_context():
+        csrf.init_app(app)
 
     try:
         os.makedirs(app.instance_path)

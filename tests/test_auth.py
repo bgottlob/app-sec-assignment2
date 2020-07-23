@@ -50,18 +50,15 @@ def test_login_logout(client, routes):
         assert session['username'] == __name__
         routes.logout(client)
         assert (not 'username' in session)
-        assert (len(session) == 0)
 
 def test_incorrect_login(client, routes):
     routes.register(client, __name__, 'testpassword', '6091234567')
     with client:
         res = routes.login(client, __name__, 'testpassword!', '6091234567').data.decode('utf-8')
         assert (not 'username' in session)
-        assert (len(session) == 0)
         assertLoginMessage('incorrect', res)
         res = routes.login(client, f'{__name__}!', 'testpassword', '6091234567').data.decode('utf-8')
         assert (not 'username' in session)
-        assert (len(session) == 0)
         assertLoginMessage('incorrect', res)
 
 def test_mfa_failure(client, routes):
@@ -69,5 +66,4 @@ def test_mfa_failure(client, routes):
     with client:
         res = routes.login(client, __name__, 'testpassword', '6091111111').data.decode('utf-8')
         assert (not 'username' in session)
-        assert (len(session) == 0)
         assertLoginMessage('mfa', res)

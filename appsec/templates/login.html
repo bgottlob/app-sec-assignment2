@@ -2,6 +2,7 @@
 {% block body %}
   <h1>Login</h1>
   <form name="login" action="/login" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     Username: <input id="uname" name="uname" type="text" value="{{ username }}" required/>
     <br>
     Password: <input id="pword" name="pword" type="password" value="{{ password }}" required/>

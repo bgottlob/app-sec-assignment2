@@ -6,6 +6,7 @@ import pytest
 def app():
     app = appsec.create_app(os.urandom(16))
     app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
     return app
 
 @pytest.fixture
