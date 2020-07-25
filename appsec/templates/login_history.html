@@ -2,6 +2,7 @@
 {% block body %}
   <h1>Login Session Log</h1>
   <form id="userid" action="/login_history" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input name="userid" placeholder="Search by username" type="text" required/>
     <br>
     <button type="submit">Search</button>

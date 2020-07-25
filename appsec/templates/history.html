@@ -4,6 +4,7 @@
 
   {% if is_admin %}
   <form id="userquery" action="/history" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input name="userquery" placeholder="Search by username" type="text" required/>
     <br>
     <button type="submit">Search</button>
