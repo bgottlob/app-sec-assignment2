@@ -35,6 +35,13 @@ def assertMisspelled(misspelled, html):
     assert match
     assert (misspelled == match.group(1))
 
+def assertSubmissionNotShown(submission_id, html):
+    try:
+        assertIndividualSubmissionID(s['id'], html)
+        assert False
+    except:
+        assert True
+
 def test_history(user_clients, admin_client, routes):
     subs = [{ 'id': 1, 'text': 'Hello, wrold!', 'misspelled': 'wrold' },
             { 'id': 2, 'text': 'Hlelo, world!', 'misspelled': 'Hlelo' }]
@@ -52,11 +59,7 @@ def test_history(user_clients, admin_client, routes):
 
         # Should NOT see the other user's submission
         html = routes.submission(client, subs[1]['id']).data.decode('utf-8')
-        try:
-            assertIndividualSubmissionID(subs[1]['id'], html)
-            assert False
-        except:
-            assert True
+        assertSubmissionNotShown(subs[1]['id'], html)
 
     with user_clients[1] as client:
         html = routes.history(client).data.decode('utf-8')
@@ -69,16 +72,54 @@ def test_history(user_clients, admin_client, routes):
         assertMisspelled(subs[1]['misspelled'], html)
 
         html = routes.submission(client, subs[0]['id']).data.decode('utf-8')
-        try:
-            assertIndividualSubmissionID(subs[0]['id'], html)
-            assert False
-        except:
-            assert True
+        assertSubmissionNotShown(subs[0]['id'], html)
 
     # Admin can see all submissions
-    with admin_client:
+    with admin_client as client:
         for s in subs:
-            html = routes.submission(admin_client, s['id']).data.decode('utf-8')
+            html = routes.submission(client, s['id']).data.decode('utf-8')
             assertIndividualSubmissionID(s['id'], html)
             assertUserInput(s['text'], html)
             assertMisspelled(s['misspelled'], html)
+
+# Admin can filter by username
+def test_history_user_search(user_clients, admin_client, registered_users, routes):
+    subs = [{ 'id': 1, 'text': 'Hello, wrold!', 'misspelled': 'wrold' },
+            { 'id': 2, 'text': 'Hlelo, world!', 'misspelled': 'Hlelo' }]
+
+    # Create the test data - one submission per user
+    with user_clients[0] as client: routes.check_words(client, subs[0]['text'])
+    with user_clients[1] as client: routes.check_words(client, subs[1]['text'])
+
+    with admin_client as client:
+        html = routes.history_user_search(
+            client,
+            registered_users[0]['username']
+        ).data.decode('utf-8')
+        assertSubmissionID(subs[0]['id'], html)
+        assertSubmissionNotShown(subs[1]['id'], html)
+
+        html = routes.history_user_search(
+            client,
+            registered_users[1]['username']
+        ).data.decode('utf-8')
+        assertSubmissionID(subs[1]['id'], html)
+        assertSubmissionNotShown(subs[0]['id'], html)
+
+def test_history_admin_only(user_clients, registered_users, routes):
+    subs = [{ 'id': 1, 'text': 'Hello, wrold!', 'misspelled': 'wrold' },
+            { 'id': 2, 'text': 'Hlelo, world!', 'misspelled': 'Hlelo' }]
+
+    # Create the test data - one submission per user
+    with user_clients[0] as client: routes.check_words(client, subs[0]['text'])
+    with user_clients[1] as client: routes.check_words(client, subs[1]['text'])
+
+    # Users perform unauthorized access and are redirected back to their
+    # own history pages
+    with user_clients[0] as client:
+        html = routes.history_user_search(client, registered_users[1]['username']).data.decode('utf-8')
+        assertSubmissionNotShown(subs[1]['id'], html)
+
+    with user_clients[1] as client:
+        html = routes.history_user_search(client, registered_users[0]['username']).data.decode('utf-8')
+        assertSubmissionNotShown(subs[0]['id'], html)

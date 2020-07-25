@@ -11,6 +11,7 @@ bp = Blueprint('history', __name__)
 def history():
     user = auth.authenticated()
     if user:
+        submissions = []
         # An admin is searching for a specific user's submissions
         if request.method == 'POST' and auth.is_admin(user):
             username = request.values['userquery']

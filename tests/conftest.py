@@ -46,6 +46,12 @@ class Routes:
         return client.get('/history', follow_redirects = True)
 
     @staticmethod
+    def history_user_search(client, username):
+        return client.post('/history', data = {
+            'userquery': username
+        }, follow_redirects = True)
+
+    @staticmethod
     def submission(client, submission_id):
         return client.get(f'/history/query{submission_id}',
                           follow_redirects = True)
