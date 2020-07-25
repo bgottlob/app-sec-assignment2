@@ -56,6 +56,12 @@ class Routes:
         return client.get(f'/history/query{submission_id}',
                           follow_redirects = True)
 
+    @staticmethod
+    def login_history(client, username):
+        return client.post('/login_history', data = {
+            'userid': username
+        }, follow_redirects = True)
+
 @pytest.fixture
 def routes():
     return Routes
