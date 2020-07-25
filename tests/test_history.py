@@ -1,4 +1,3 @@
-from flask import session
 import re
 
 # Assertions for /history page
