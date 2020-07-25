@@ -35,41 +35,30 @@ def assertMisspelled(misspelled, html):
     assert match
     assert (misspelled == match.group(1))
 
-def test_history(client, routes, registered_users):
+def test_history(user_clients, admin_client, routes):
     subs = [{ 'id': 1, 'text': 'Hello, wrold!', 'misspelled': 'wrold' },
             { 'id': 2, 'text': 'Hlelo, world!', 'misspelled': 'Hlelo' }]
 
-    with client:
-        # Create the test data - one submission per user
-        routes.login(client,
-                     registered_users[0]['username'],
-                     registered_users[0]['password'],
-                     registered_users[0]['mfa'])
-        routes.check_words(client, subs[0]['text'])
-        routes.logout(client)
+    # Create the test data - one submission per user
+    with user_clients[0] as client: routes.check_words(client, subs[0]['text'])
+    with user_clients[1] as client: routes.check_words(client, subs[1]['text'])
 
-        routes.login(client,
-                     registered_users[1]['username'],
-                     registered_users[1]['password'],
-                     registered_users[1]['mfa'])
-        routes.check_words(client, subs[1]['text'])
-        routes.logout(client)
-
-        # Read the data - each user should only see one submission, but
-        # different submissions - each one's own
-        routes.login(client,
-                     registered_users[0]['username'],
-                     registered_users[0]['password'],
-                     registered_users[0]['mfa'])
+    # Read the data - each user should only see one submission, but
+    # different submissions - each one's own
+    with user_clients[0] as client:
         html = routes.history(client).data.decode('utf-8')
         assertNumSubmissions(1, html)
         assertSubmissionID(subs[0]['id'], html)
-        routes.logout(client)
 
-        routes.login(client,
-                     registered_users[1]['username'],
-                     registered_users[1]['password'],
-                     registered_users[1]['mfa'])
+        # Should NOT see the other user's submission
+        html = routes.submission(client, subs[1]['id']).data.decode('utf-8')
+        try:
+            assertIndividualSubmissionID(subs[1]['id'], html)
+            assert False
+        except:
+            assert True
+
+    with user_clients[1] as client:
         html = routes.history(client).data.decode('utf-8')
         assertNumSubmissions(1, html)
         assertSubmissionID(subs[1]['id'], html)
@@ -85,3 +74,11 @@ def test_history(client, routes, registered_users):
             assert False
         except:
             assert True
+
+    # Admin can see all submissions
+    with admin_client:
+        for s in subs:
+            html = routes.submission(admin_client, s['id']).data.decode('utf-8')
+            assertIndividualSubmissionID(s['id'], html)
+            assertUserInput(s['text'], html)
+            assertMisspelled(s['misspelled'], html)

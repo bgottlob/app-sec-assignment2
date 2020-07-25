@@ -54,6 +54,7 @@ class Routes:
 def routes():
     return Routes
 
+# Create pre-defined user accounts
 @pytest.fixture
 def registered_users(client, routes):
     users = [
@@ -64,3 +65,21 @@ def registered_users(client, routes):
         for u in users:
             routes.register(client, u['username'], u['password'], u['mfa'])
     return users
+
+# A list of clients for non-admin users
+@pytest.fixture
+def user_clients(app, registered_users, routes):
+    clients = []
+    for u in registered_users:
+        c = app.test_client()
+        with c:
+            routes.login(c, u['username'], u['password'], u['mfa'])
+        clients.append(c)
+    return clients
+
+# A client for an admin user
+@pytest.fixture
+def admin_client(client, routes):
+    with client:
+        routes.login(client, 'admin', 'Administrator@1', '12345678901')
+    return client
