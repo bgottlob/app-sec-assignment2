@@ -30,7 +30,7 @@ def history():
 
     return redirect(url_for('index'))
 
-@bp.route('/history/<int:id>')
+@bp.route('/history/query<int:id>')
 def submission(id):
     user = auth.authenticated()
     if user:

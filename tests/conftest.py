@@ -47,7 +47,8 @@ class Routes:
 
     @staticmethod
     def submission(client, submission_id):
-        return client.get(f'/history/{submission_id}', follow_redirects = True)
+        return client.get(f'/history/query{submission_id}',
+                          follow_redirects = True)
 
 @pytest.fixture
 def routes():
