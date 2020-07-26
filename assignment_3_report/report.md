@@ -20,10 +20,20 @@ lang: en-US
 
 # Assignment 3
 
+## Repository Link
+
+[https://github.com/bgottlob/app-sec-assignment2](https://github.com/bgottlob/app-sec-assignment2)
+
+\noindent
+This is the same repository used for assignment 2.
+Additional commits have been added to implement assignment 3.
+The following link is to a tag for the code submitted as assignment 3:
+
+[https://github.com/bgottlob/app-sec-assignment2/releases/tag/v2.0](https://github.com/bgottlob/app-sec-assignment2/releases/tag/v2.0)
+
 ## Database Design
 
 There are three tables in the database: User, AuthSession, and Submission.
-
 The User table manages user data and credentials, and it contains the following columns:
 
 - `id`: an auto-incrementing integer used as the primary key
@@ -75,13 +85,103 @@ However, I separated the logout timestamp and the `valid` flag because they are 
 Logically, it seemed cleaner to use two separate columns although it is redundant.
 A single bit is a very low cost to pay in redundancy.
 
-## Application Security Design Decisions
-- No usage of string interpolation into SQL statements - strictly used the ORM query(), add(), and commit() methods to interact with the database
+## Application Design Decisions
 
-- logout_datetime - when the user logged out or when the session was invalidated
-  - If the user logs in a second time, the first session is invalidated, and the logout time is set a the same time as the login time of the new session
-  - Logging out will invalidate all sessions for the user, not just the current one
-  - These measures prevent session fixation vulnerabilities
+To protect against SQL injection vulnerabilities, the SQLAlchemy object-relational mapping is used to create the database schema, perform queries, and manipulate data rows.
+SQLAlchemy does provide an `execute()` function to execute arbitrary SQL statements, but the application strictly uses the ORM SQL generation functions `query()`, `add()`, and `commit()` to query for and modify data.
+These functions utilize SQL prepared statements, which provide injection prevention by escaping special characters.
+There are no instances where string interpolation is used to build explicit SQL statements.
 
-- Simple is_admin function - what if there are multiple admins?
-  - Add an admin column to user table, rewrite is_admin to check if that username has 
+As previously mentioned, the `valid` column of the AuthSession table set to `False` in order to invalidate sessions.
+Whenever a user logs out, all of that user's sessions are invalidated
+When a session is invalid the logout timestamp is set.
+This means that the presence of a logout timestamp does not necessarily mean the user manually logged out.
+The intention of the logout timestamp is to track when the session became invalid and no longer usable, rather than strictly tracking user activity.
+This behavior allows for up to one of a user's sessions to have a `valid` flag set to `True`, preventing session fixation vulnerabilities.
+
+Besides limiting a user's query history limited to each specific authenticated user, this application supports admin level access.
+For simplicity from a database design perspective, the admin user is uniquely identified by the User table row with a username of `admin`.
+Upon database creation, the admin account is also created.
+This, in conjunction with the username uniqueness constraint prevents end users from creating admin accounts.
+An `is_admin()` function has been implemented to serve as admin access control by checking whether an authenticated user's username is `admin`.
+Clearly, this does not support the ability to create multiple admin accounts.
+However, the use of `is_admin()` throughout the application allows for the underlying implementation of that function to be updated to support multiple admins without changing every part of application code where this access control check is performed.
+
+## SQL Injection Attempts
+
+SQLMap was used to perform penetration testing for SQL injection vulnerabilities.
+The following endpoint and methods have been tested:
+
+- POST `/register`
+- POST `/login`
+- POST `/spell_check` (requires authentication)
+- POST `/history` (requires admin authentication for username search)
+- GET `/history/query<id>` (requires authentication)
+- POST `/login_history` (requires admin authentication)
+
+This includes all POST forms in the application, as well as the only GET that accepts a query parameter.
+
+For all endpoints that require the end user to be authenticated, the `--level` option to sqlmap, which attempts to perform SQL injection on HTTP cookie header values.
+To simulate an authenticated user, a cookie pulled from an authentication session will be passed to sqlmap.
+For all POST endpoints, the forms in the UI are automatically detected using the `--form` option.
+
+All endpoints were tested with a `--risk` option of 3, which is the maximum value.
+This high level of "risk" means that the injection attacks attempted can potentially corrupt many records in the database.
+Since there is no fear of detection and no critical data that cannot easily be regenerated in the database, the maximum risk level can be used.
+The `--dbms` option is set to SQLite, since it is known beforehand that SQLite is used, and the penetration test does not need to waste time trying injection attacks for specific DBMS platforms that are not used.
+
+### Results
+
+I was not able to find any SQL injection vulnerabilities by using sqlmap.
+Below contains logs for the POST fields, URL parameters, and cookie parameters tested by sqlmap, all of which were not found to be injectable:
+
+```
+heuristic (basic) test shows that URI parameter '#1*' might not be injectable
+URI parameter '#1*' does not seem to be injectable
+heuristic (basic) test shows that POST parameter 'userquery' might not be injectable
+POST parameter 'userquery' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'session' might not be injectable
+Cookie parameter 'session' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'Expires' might not be injectable
+Cookie parameter 'Expires' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'Path' might not be injectable
+Cookie parameter 'Path' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'SameSite' might not be injectable
+Cookie parameter 'SameSite' does not seem to be injectable
+heuristic (basic) test shows that POST parameter 'userid' might not be injectable
+POST parameter 'userid' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'session' might not be injectable
+Cookie parameter 'session' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'Expires' might not be injectable
+Cookie parameter 'Expires' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'Path' might not be injectable
+Cookie parameter 'Path' does not seem to be injectable
+heuristic (basic) test shows that Cookie parameter 'SameSite' might not be injectable
+Cookie parameter 'SameSite' does not seem to be injectable
+heuristic (basic) test shows that POST parameter 'uname' might not be injectable
+POST parameter 'uname' does not seem to be injectable
+heuristic (basic) test shows that POST parameter 'pword' might not be injectable
+POST parameter 'pword' does not seem to be injectable
+heuristic (basic) test shows that POST parameter '2fa' might not be injectable
+POST parameter '2fa' does not seem to be injectable
+POST parameter 'uname' does not seem to be injectable
+POST parameter 'pword' does not seem to be injectable
+POST parameter '2fa' does not seem to be injectable
+```
+
+For the GET `/history/query<id>` sqlmap tests, I tested SQL injection both with and without the URL having the `query` prefix before the provided id.
+Below is a screenshot of these tests yielding 404 Not Found errors resulting from the injection attempts:
+
+![](404_log.png)
+
+The following screenshots demonstrate some of the inputs used to test the POST `/spell_check` endpoint:
+
+![](submission_1.png)
+
+![](submission_2.png)
+
+![](submission_3.png)
+
+![](submission_log_1.png)
+
+![](submission_log_2.png)
