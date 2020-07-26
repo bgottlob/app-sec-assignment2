@@ -57,7 +57,15 @@ def create_app(secret_key, clean_db=False):
 
     @app.route('/', methods = ['GET'])
     def index():
-        return render_template('index.html')
+        user = auth.authenticated()
+        if user:
+            return render_template('index.html',
+                                   authenticated = True,
+                                   is_admin = auth.is_admin(user))
+        else:
+            return render_template('index.html',
+                                   authenticated = False,
+                                   is_admin = False)
 
     app.register_blueprint(auth.bp)
     # Use authentication check function in jinja templates

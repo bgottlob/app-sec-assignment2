@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 <h1>Home</h1>
-{% if authenticated() %}
+{% if authenticated %}
 
   You are logged in as {{ session['username'] }}
   <br>
@@ -11,6 +11,11 @@
   <br>
 
   <a href="{{ url_for('history.history') }}">Your submission history</a>
+
+  {% if is_admin %}
+  <br>
+  <a href="{{ url_for('auth.login_history') }}">Login History</a>
+  {% endif %}
 
   <br>
   

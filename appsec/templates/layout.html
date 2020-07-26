@@ -1,4 +1,6 @@
 <!doctype html>
+<a href="{{ url_for('index') }}">Home</a>
+<br>
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
   <ul>
