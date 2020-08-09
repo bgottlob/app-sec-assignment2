@@ -1,0 +1,42 @@
+version: '3.8'
+
+secrets:
+  SECRET_KEY:
+    external: true
+  ADMIN_PASSWORD:
+    external: true
+  ADMIN_MFA:
+    external: true
+
+volumes:
+  db_sqlite:
+
+services:
+  web:
+    image: "app-sec-assignment2_web:latest"
+    ports:
+      - target: 5000
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    volumes:
+      - db_sqlite:/usr/src/app/appsec/db
+    deploy:
+      replicas: 4
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 100M
+        reservations:
+          cpus: '0.25'
+          memory: 50M
+    environment: # Do not allow secrets to be passed as shell environment variables
+      SECRET_KEY: ''
+      ADMIN_PASSWORD: ''
+      ADMIN_MFA: ''
+    secrets:
+      - SECRET_KEY
+      - ADMIN_PASSWORD
+      - ADMIN_MFA
