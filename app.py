@@ -23,3 +23,6 @@ except KeyError:
       secret_key = os.urandom(16)
 
 app = appsec.create_app(secret_key, admin_password, admin_mfa)
+
+if __name__ == '__main__':
+      app.run(host="0.0.0.0", port=5000)
