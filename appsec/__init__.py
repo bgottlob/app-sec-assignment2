@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 csrf = CSRFProtect()
 db = SQLAlchemy()
 
-def create_app(secret_key, clean_db=False):
+def create_app(secret_key, admin_password, admin_mfa, clean_db=False):
     app = Flask(__name__, instance_relative_config=True)
     from . import model
     app.config.update(
@@ -38,7 +38,7 @@ def create_app(secret_key, clean_db=False):
         db.drop_all()
     db.create_all()
     from . import auth
-    auth.create_admin_account()
+    auth.create_admin_account(admin_password, admin_mfa)
 
     try:
         os.makedirs(app.instance_path)

@@ -20,18 +20,13 @@ bp = Blueprint('auth', __name__)
 
 user_sessions = {}
 
-def create_admin_account():
+def create_admin_account(password, mfa):
     admin = db.session.query(model.User).filter_by(username = 'admin').one_or_none()
     if admin == None:
-        # Required hard-coded admin credentials
-        username = 'admin'
-        password = 'Administrator@1'
-        mfa = '12345678901'
-
         # Create the admin User object
         password_hash, salt = hash_password(password)
         admin = model.User(
-            username = username,
+            username = 'admin',
             password_hash = password_hash,
             salt = salt,
             mfa = mfa
